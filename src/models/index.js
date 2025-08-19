@@ -24,6 +24,7 @@ const models = {
   Province,
   Buyers,
   City,
+  Chats
 };
 
 Object.values(models).forEach(model => {
@@ -42,6 +43,7 @@ export {
   Province,
   Buyers,
   City,
+  Chats
 };
 
 export default models;

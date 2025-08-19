@@ -11,6 +11,7 @@ import purchaseRouter from './routes/purchase.routes.js';
 import locationRouter from './routes/location.routes.js';
 import orderRouter from './routes/order.routes.js';
 import categoriesRouter from './routes/categories.routes.js';
+import chatRouter from './routes/chats.routes.js';
 
 import cors from "cors";
 import path from 'path';
@@ -39,6 +40,7 @@ app.use(purchaseRouter);
 app.use(locationRouter);
 app.use(orderRouter);
 app.use(categoriesRouter);
+app.use(chatRouter);
 
 io.on("connection", (socket) => {
   console.log("Usuario conectado:", socket.id);
