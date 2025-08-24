@@ -1,5 +1,6 @@
-import { where } from 'sequelize';
-import models from '../models/index.js';
+import { where } from "sequelize";
+import models from "../models/index.js";
+import bcrypt from "bcrypt";
 
 const { Buyers, Sellers, Publications, OrderDetail, Chats, Messages } = models;
 
@@ -27,10 +28,14 @@ export const createSeller = async (req, res) => {
   const { buyerId } = req.body;
 
   try {
-    const existingSeller = await Sellers.findOne({ where: { ID_Buyers: buyerId } });
+    const existingSeller = await Sellers.findOne({
+      where: { ID_Buyers: buyerId },
+    });
 
     if (existingSeller) {
-      return res.status(400).json({ message: 'Ya estás registrado como vendedor.' });
+      return res
+        .status(400)
+        .json({ message: "Ya estás registrado como vendedor." });
     }
 
     const newSeller = await Sellers.create({
@@ -39,10 +44,14 @@ export const createSeller = async (req, res) => {
       QuantitySales: 0,
     });
 
-    return res.status(201).json({ message: '¡Registro como vendedor exitoso!', seller: newSeller });
+    return res
+      .status(201)
+      .json({ message: "¡Registro como vendedor exitoso!", seller: newSeller });
   } catch (error) {
-    console.error('Error al registrar vendedor:', error);
-    return res.status(500).json({ message: 'Error al registrar como vendedor.' });
+    console.error("Error al registrar vendedor:", error);
+    return res
+      .status(500)
+      .json({ message: "Error al registrar como vendedor." });
   }
 };
 
@@ -72,14 +81,14 @@ export async function removeBuyer(id) {
     }
 
     await Messages.destroy({
-      where: { sender_id: id}
+      where: { sender_id: id },
     });
 
     await Chats.destroy({
-      where: { 
+      where: {
         ID_User: id,
-        ID_Buyers: id
-       }
+        ID_Buyers: id,
+      },
     });
 
     await buyer.destroy();
@@ -93,12 +102,17 @@ export async function removeBuyer(id) {
 
 export async function createsBuyer(data) {
   const existingBuyer = await Buyers.findOne({
-    where: { Email: data.Email }
+    where: { Email: data.Email },
   });
 
   if (existingBuyer) {
-    throw new Error('El email ya está registrado');
+    throw new Error("El email ya está registrado");
   }
+  //Hasheamos el password
+  const saltRounds = 10;
+  const salt = await bcrypt.genSalt(saltRounds);
+  const hashedPassword = await bcrypt.hash(data.Passwords, salt);
+  data.Passwords = hashedPassword;
 
   return await Buyers.create(data);
 }
