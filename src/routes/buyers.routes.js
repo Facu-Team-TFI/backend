@@ -4,6 +4,9 @@ import {
   removeBuyer,
   removeSeller,
   createsBuyer,
+  resetPassword,
+  verifyTokenByQuery,
+  forgotPassword,
 } from "../services/buyers.services.js";
 import jwt from "jsonwebtoken";
 import multer from "multer";
@@ -260,5 +263,9 @@ router.delete("/admin/usuarios/:id", async (req, res) => {
 });
 
 router.post("/register-seller", createSeller);
+
+router.post("/auth/forgot-password", forgotPassword);
+
+router.put("/auth/reset-password", verifyTokenByQuery, resetPassword);
 
 export default router;

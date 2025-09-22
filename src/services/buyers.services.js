@@ -1,6 +1,8 @@
 import { where } from "sequelize";
 import models from "../models/index.js";
 import bcrypt from "bcrypt";
+import nodemailer from "nodemailer";
+import jwt from "jsonwebtoken";
 
 const { Buyers, Sellers, Publications, OrderDetail, Chats, Messages } = models;
 
@@ -148,3 +150,123 @@ export async function removeSeller(id) {
     throw error;
   }
 }
+
+export const forgotPassword = async (req, res) => {
+  //Primero comprobamos si el usuario no existe
+  const { email } = req.body;
+  const buyer = await Buyers.findOne({ where: { Email: email } });
+
+  if (!buyer) {
+    return res.status(404).json({
+      success: false,
+      message: "El email ingresado no se encuentra registrado",
+    });
+  }
+
+  //Si encontró el usuario, le envía un email
+  try {
+    // Configuramos el transporte (SMTP)
+    const transporter = nodemailer.createTransport({
+      service: "gmail", // También podés usar host, port y auth para SMTP personalizado
+      auth: {
+        user: "CarpinChords@gmail.com", // email del emisor
+        pass: "kxfl elsw meat dyww", // contraseña o app password
+      },
+      tls: {
+        rejectUnauthorized: false, // <-- Esto ignora el error de certificado
+      },
+    });
+
+    const secretKey = process.env.JWT_SECRET || "CarpinChords";
+    const token = jwt.sign({ id: buyer.ID_Buyers }, secretKey, {
+      expiresIn: "1h",
+    });
+
+    // Campos del mail
+    const mailOptions = {
+      from: "CarpinChords@gmail.com",
+      to: email,
+      subject: "Recuperación de contraseña",
+      html: `
+    <h2>Recuperación de contraseña</h2>
+    <p>Hola,</p>
+    <p>Recibimos una solicitud para restablecer tu contraseña.</p>
+    <p>Haz click en el siguiente enlace para crear una nueva contraseña:</p>
+    <a href="http://localhost:5173/auth/reset-password?token=${token}">
+      Restablecer contraseña
+    </a>
+    <p>Si no solicitaste el cambio, ignora este correo.</p>
+    <p>Saludos,<br>El equipo de CarpinChords</p>
+  `,
+    };
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({
+      success: true,
+      message:
+        "Se ha enviado un email con instrucciones para restablecer la contraseña",
+    });
+  } catch (error) {
+    console.error("Error al enviar el correo:", error);
+    res.status(500).json({ success: false, message: "Error enviando correo" });
+  }
+};
+
+export const verifyTokenByQuery = (req, res, next) => {
+  // esta función se puede modificar para que también pueda recibir el token por header o algun otro lado
+
+  const { token } = req.query;
+  const secretKey = process.env.JWT_SECRET || "CarpinChords";
+
+  // Si no hay token, devuelve error 401 (no autorizado)
+  if (!token) {
+    return res
+      .status(401)
+      .json({ success: false, message: "No posee autorización requerida" });
+  }
+
+  try {
+    // Verifica que el token sea válido usando la clave secreta
+    const payload = jwt.verify(token, secretKey);
+    req.id = payload.id;
+
+    next();
+  } catch (error) {
+    return res
+      .status(403)
+      .json({ success: false, message: "No posee permisos correctos" });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  const id = req.id;
+  const { password } = req.body;
+
+  try {
+    // Buscamos al usuario
+    const buyer = await Buyers.findByPk(id);
+    if (!buyer) {
+      return res.status(404).json({
+        success: false,
+        message: "Usuario no encontrado",
+      });
+    }
+
+    // Hasheamos la nueva contraseña
+    const saltRounds = 10;
+    const salt = await bcrypt.genSalt(saltRounds);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    buyer.Passwords = hashedPassword;
+    await buyer.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Contraseña actualizada correctamente",
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: "No se ha podido cambiar la contraseña",
+    });
+  }
+};
