@@ -1,6 +1,7 @@
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import { initAssociations } from "./Associations.js";
 import { PORT } from "./config.js";
 import { sequelize } from "./models/index.js";
 
@@ -12,6 +13,7 @@ import locationRouter from "./routes/location.routes.js";
 import orderRouter from "./routes/order.routes.js";
 import categoriesRouter from "./routes/categories.routes.js";
 import chatRouter from "./routes/chats.routes.js";
+import notificationRouter from "./routes/notification.routes.js";
 
 import cors from "cors";
 import path from "path";
@@ -41,6 +43,7 @@ app.use(locationRouter);
 app.use(orderRouter);
 app.use(categoriesRouter);
 app.use(chatRouter);
+app.use(notificationRouter);
 
 io.on("connection", (socket) => {
   console.log("Usuario conectado:", socket.id);
@@ -61,7 +64,9 @@ io.on("connection", (socket) => {
 
 async function main() {
   try {
-    await sequelize.sync({ alter: false });
+    initAssociations();
+    console.log("Model associations initialized");
+    await sequelize.sync({ alter: true });
     console.log("Base de datos sincronizada");
 
     server.listen(PORT, () => {

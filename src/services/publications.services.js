@@ -1,31 +1,30 @@
-
 import models from "../models/index.js";
 
-const { Publications, Category, SubCategory, City, Province, Sellers, Buyers } = models;
+const { Publications, Category, SubCategory, City, Province, Sellers, Buyers } =
+  models;
 
 export const getAll = async () => {
   return Publications.findAll({
     include: [
       {
         model: Category,
-        attributes: ['ID_Category', 'CategoryName'],
+        attributes: ["ID_Category", "CategoryName"],
       },
       {
         model: SubCategory,
-        attributes: ['ID_SubCategory', 'NameSubCategory'],
+        attributes: ["ID_SubCategory", "NameSubCategory"],
       },
       {
         model: City,
-        as: 'City',
-        attributes: ['ID_City', 'Name'],
+        as: "City",
+        attributes: ["ID_City", "Name"],
         include: {
           model: Province,
-          as: 'Province',
-          attributes: ['ID_Province', 'Name']
-        }
+          as: "Province",
+          attributes: ["ID_Province", "Name"],
+        },
       },
-    ]
-
+    ],
   });
 };
 
@@ -33,30 +32,36 @@ export const getSellerByPublicationId = async (publicationId) => {
   const publication = await Publications.findByPk(publicationId, {
     include: {
       model: Sellers,
-      as: 'Seller',
-      attributes: ['ID_Sellers'],
+      as: "Seller",
+      attributes: ["ID_Sellers"],
       include: {
         model: Buyers,
-        as: 'Buyer',
-        attributes: ['ID_Buyers', 'avatarUrl', 'BuyersName', 'BuyersLastName', 'NickName', 'Email', 'Phone'],
+        as: "Buyer",
+        attributes: [
+          "ID_Buyers",
+          "avatarUrl",
+          "BuyersName",
+          "BuyersLastName",
+          "NickName",
+          "Email",
+          "Phone",
+        ],
         include: {
           model: City,
-          as: 'City',
-          attributes: ['ID_City', 'Name'],
+          as: "City",
+          attributes: ["ID_City", "Name"],
           include: {
             model: Province,
-            as: 'Province',
-            attributes: ['ID_Province', 'Name']
-          }
-        }
-      }
-    }
+            as: "Province",
+            attributes: ["ID_Province", "Name"],
+          },
+        },
+      },
+    },
   });
 
   return publication?.Seller || null;
 };
-
-
 
 export const getById = async (id) => Publications.findByPk(id);
 
@@ -72,7 +77,7 @@ export const createPublication = async (req, res) => {
       description,
       image,
       cityId,
-      sellerId
+      sellerId,
     } = req.body;
 
     const newPublication = await Publications.create({
@@ -85,13 +90,13 @@ export const createPublication = async (req, res) => {
       DescriptionProduct: description,
       ImageUrl: image,
       ID_City: cityId,
-      ID_Sellers: sellerId
+      ID_Sellers: sellerId,
     });
 
     res.status(201).json(newPublication);
   } catch (error) {
-    console.error('Error al crear la publicación:', error);
-    res.status(500).json({ error: 'Error al crear la publicación' });
+    console.error("Error al crear la publicación:", error);
+    res.status(500).json({ error: "Error al crear la publicación" });
   }
 };
 
@@ -108,7 +113,6 @@ export const remove = async (id) => {
   return pub;
 };
 
-
 export const getLatest = async (limit = 5) => {
   return await Publications.findAll({
     order: [["created_at", "DESC"]],
@@ -116,23 +120,22 @@ export const getLatest = async (limit = 5) => {
     include: [
       {
         model: Category,
-        attributes: ['ID_Category', 'CategoryName'],
+        attributes: ["ID_Category", "CategoryName"],
       },
       {
         model: SubCategory,
-        attributes: ['ID_SubCategory', 'NameSubCategory'],
+        attributes: ["ID_SubCategory", "NameSubCategory"],
       },
       {
         model: City,
-        as: 'City',
-        attributes: ['ID_City', 'Name'],
+        as: "City",
+        attributes: ["ID_City", "Name"],
         include: {
           model: Province,
-          as: 'Province',
-          attributes: ['ID_Province', 'Name']
-        }
-      }
-
-    ]
+          as: "Province",
+          attributes: ["ID_Province", "Name"],
+        },
+      },
+    ],
   });
 };
