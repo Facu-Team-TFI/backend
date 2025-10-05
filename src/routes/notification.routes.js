@@ -3,7 +3,7 @@ import { getAll, remove } from "../services/notification.services.js";
 
 const router = Router();
 
-router.get("/notifications/:userId", getAll);
+router.get("/:userId/notifications", getAll);
 
 router.delete("/notifications/:id", remove);
 
