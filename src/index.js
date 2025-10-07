@@ -26,7 +26,9 @@ const io = new Server(server, {
     origin: "*",
     methods: ["GET", "POST"],
   },
+  //cors: { origin: "http://localhost:5173" },
 });
+//export { io };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,6 +62,8 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("Usuario desconectado");
   });
+
+  socket.on("new-notification", () => {});
 });
 
 async function main() {
