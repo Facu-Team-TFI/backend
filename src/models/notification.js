@@ -27,6 +27,11 @@ const Notification = sequelize.define(
       type: DataTypes.ENUM(...Object.values(NotificationTypes)),
       allowNull: false,
     },
+    senderId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+    },
     createdAt: {
       type: DataTypes.DATE,
       defaultValue: Sequelize.NOW,

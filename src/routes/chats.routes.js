@@ -95,13 +95,28 @@ router.post("/messages", async (req, res) => {
     });
 
     res.status(201).json(message);
+
+    //Notificación
     const chat = await Chats.findByPk(chat_id);
     const userId = chat.ID_User == sender_id ? chat.ID_Buyers : chat.ID_User;
+    if (
+      await Notification.findOne({
+        where: {
+          userId,
+          type: "mensaje",
+          senderId: sender_id,
+        },
+      })
+    ) {
+      return;
+    }
+    const sender = await Buyers.findByPk(sender_id);
     await Notification.create({
       userId,
-      title: "Nuevo Mensaje",
+      title: "Nuevo/s Mensaje/s",
       type: "mensaje",
-      description: `Tienes un nuevo mensaje.`,
+      senderId: sender_id,
+      description: `Tienes nuevo/s mensajes de ${sender.NickName}`,
     });
   } catch (error) {
     console.error(error);
