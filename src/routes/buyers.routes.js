@@ -162,7 +162,8 @@ router.post("/api/login", async (req, res) => {
 
     const token = jwt.sign(
       { id: buyer.ID_Buyers, role: "buyer", isAdmin: buyer.IsAdmin },
-      SECRET_KEY
+      SECRET_KEY,
+      { expiresIn: "1h" }
     );
 
     return res.json({
