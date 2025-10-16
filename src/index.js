@@ -70,7 +70,7 @@ async function main() {
   try {
     initAssociations();
     console.log("Model associations initialized");
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ alter: false });
     console.log("Base de datos sincronizada");
 
     server.listen(PORT, () => {
