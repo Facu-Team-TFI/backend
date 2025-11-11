@@ -21,7 +21,7 @@ import { fileURLToPath } from "url";
 
 const app = express();
 const server = createServer(app);
-const io = new Server(server, {
+export const io = new Server(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
@@ -50,6 +50,13 @@ app.use(notificationRouter);
 io.on("connection", (socket) => {
   console.log("Usuario conectado:", socket.id);
 
+  //Notifications
+  socket.on("client:join_notifications", (userId) => {
+    socket.join(String(userId));
+    console.log(`🔔 Usuario ${userId} suscrito a su canal de notificaciones`);
+  });
+
+  //Chat
   socket.on("join", (chatId) => {
     socket.join(String(chatId));
     console.log(`Usuario unido a la sala: ${chatId}`);
@@ -62,8 +69,6 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("Usuario desconectado");
   });
-
-  socket.on("new-notification", () => {});
 });
 
 async function main() {

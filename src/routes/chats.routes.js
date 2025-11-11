@@ -2,6 +2,7 @@ import { Router } from "express";
 import models from "../models/index.js";
 
 import Notification from "../models/notification.js"; // This was already correct, no change needed.
+import { io } from "../index.js";
 import { Op } from "sequelize";
 
 const router = Router();
@@ -111,13 +112,14 @@ router.post("/messages", async (req, res) => {
       return;
     }
     const sender = await Buyers.findByPk(sender_id);
-    await Notification.create({
+    const notification = await Notification.create({
       userId,
       title: "Nuevo/s Mensaje/s",
       type: "mensaje",
       senderId: sender_id,
       description: `Tienes nuevo/s mensajes de ${sender.NickName}`,
     });
+    io.to(String(userId)).emit("server:new-notification", notification);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "No se pudo crear el mensaje" });
