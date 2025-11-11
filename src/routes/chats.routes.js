@@ -1,8 +1,8 @@
 import { Router } from "express";
 import models from "../models/index.js";
 
-import Notification from "../models/notification.js"; // This was already correct, no change needed.
-import { io } from "../index.js";
+import * as chatService from "../services/chat.services.js";
+import * as notificationService from "../services/notification.services.js";
 import { Op } from "sequelize";
 
 const router = Router();
@@ -86,43 +86,14 @@ router.post("/chat", async (req, res) => {
 
 router.post("/messages", async (req, res) => {
   try {
-    const { sender_id, text, time, chat_id } = req.body;
+    const message = await chatService.createMessage(req.body);
 
-    const message = await Messages.create({
-      sender_id,
-      text,
-      time,
-      ID_Chat: chat_id,
-    });
+    await notificationService.handleMessageNotification(message);
 
-    res.status(201).json(message);
-
-    //Notificación
-    const chat = await Chats.findByPk(chat_id);
-    const userId = chat.ID_User == sender_id ? chat.ID_Buyers : chat.ID_User;
-    if (
-      await Notification.findOne({
-        where: {
-          userId,
-          type: "mensaje",
-          senderId: sender_id,
-        },
-      })
-    ) {
-      return;
-    }
-    const sender = await Buyers.findByPk(sender_id);
-    const notification = await Notification.create({
-      userId,
-      title: "Nuevo/s Mensaje/s",
-      type: "mensaje",
-      senderId: sender_id,
-      description: `Tienes nuevo/s mensajes de ${sender.NickName}`,
-    });
-    io.to(String(userId)).emit("server:new-notification", notification);
+    return res.status(201).json(message);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "No se pudo crear el mensaje" });
+    return res.status(500).json({ error: "No se pudo crear el mensaje" });
   }
 });
 

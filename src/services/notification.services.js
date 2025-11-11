@@ -1,4 +1,7 @@
 import Notification from "../models/notification.js";
+import Chats from "../models/chats.js";
+import Buyers from "../models/buyers.js";
+import { io } from "../index.js";
 
 export const getAll = async (req, res) => {
   const { userId } = req.params;
@@ -24,18 +27,34 @@ export const remove = async (req, res) => {
   });
 };
 
-//para sockets
-export const create = async (req, res) => {
-  try {
-    const { userId, message } = req.body;
+export const handleMessageNotification = async (message) => {
+  const { sender_id, ID_Chat: chat_id } = message;
 
-    const notification = await Notification.create({ userId, message });
+  const chat = await Chats.findByPk(chat_id);
 
-    // ✅ Emitir al usuario correcto
-    io.to(String(userId)).emit("new-notification", notification);
+  const userId = chat.ID_User === sender_id ? chat.ID_Buyers : chat.ID_User;
 
-    res.status(201).json(notification);
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+  // Evitar duplicar notificaciones
+  const existing = await Notification.findOne({
+    where: {
+      userId,
+      type: "mensaje",
+      senderId: sender_id,
+    },
+  });
+
+  if (existing) return;
+
+  const sender = await Buyers.findByPk(sender_id);
+
+  const notification = await Notification.create({
+    userId,
+    title: "Nuevo/s Mensaje/s",
+    type: "mensaje",
+    senderId: sender_id,
+    description: `Tienes nuevo/s mensajes de ${sender.NickName}`,
+  });
+
+  //sockets
+  io.to(String(userId)).emit("server:new-notification", notification);
 };
