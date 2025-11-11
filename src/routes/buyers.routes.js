@@ -19,16 +19,29 @@ const { Buyers, City, Province, Sellers } = models;
 
 const router = Router();
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = "uploads/avatars";
-    fs.mkdirSync(uploadPath, { recursive: true });
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const fileName = `buyer_${Date.now()}${ext}`;
-    cb(null, fileName);
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     const uploadPath = "uploads/avatars";
+//     fs.mkdirSync(uploadPath, { recursive: true });
+//     cb(null, uploadPath);
+//   },
+//   filename: (req, file, cb) => {
+//     const ext = path.extname(file.originalname);
+//     const fileName = `buyer_${Date.now()}${ext}`;
+//     cb(null, fileName);
+//   },
+// });
+
+// const upload = multer({ storage });
+
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../config/cloudinary.js";
+
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "buyer_avatars", // Carpeta en Cloudinary
+    allowed_formats: ["jpg", "jpeg", "png"],
   },
 });
 
@@ -100,8 +113,12 @@ router.put("/buyers/:id", upload.single("avatar"), async (req, res) => {
     // Si se subió un archivo, agregalo a los datos
     console.log(req.file);
     if (req.file) {
-      data.avatarUrl = `/uploads/avatars/${req.file.filename}`;
+      data.avatarUrl = req.file.path; // Cloudinary genera una URL pública
     }
+
+    // if (req.file) {
+    //   data.avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    // }
 
     await buyer.update(data);
     res.json(buyer);
