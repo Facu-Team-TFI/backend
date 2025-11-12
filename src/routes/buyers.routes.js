@@ -63,6 +63,23 @@ const verifyToken = (req, res, next) => {
   }
 };
 
+const getRoleByToken = (req, res, next) => {
+  try {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader?.split(" ")[1]; // "Bearer token..."
+    req.user = { isAdmin: false };
+    if (!token) {
+      req.user.isAdmin = false;
+    } else {
+      // Verifica que el token sea válido usando la clave secreta
+      const payload = jwt.verify(token, SECRET_KEY);
+      req.user.isAdmin = payload.isAdmin;
+    }
+  } finally {
+    next();
+  }
+};
+
 router.get("/buyers/:id", async (req, res) => {
   try {
     const buyer = await Buyers.findByPk(req.params.id, {
@@ -92,8 +109,11 @@ router.get("/buyers/:id", async (req, res) => {
   }
 });
 
-router.post("/buyers", async (req, res) => {
+router.post("/buyers", getRoleByToken, async (req, res) => {
   try {
+    if (req.user.isAdmin) {
+      req.body.IsAdmin = true;
+    }
     const newBuyer = await createsBuyer(req.body);
 
     res.status(201).json(newBuyer);
