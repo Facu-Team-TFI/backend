@@ -1,4 +1,5 @@
 import models from "../models/index.js";
+import cloudinary from "../config/cloudinary.js";
 
 const { Publications, Category, SubCategory, City, Province, Sellers, Buyers } =
   models;
@@ -75,23 +76,42 @@ export const createPublication = async (req, res) => {
       categoryId,
       subCategoryId,
       description,
-      image,
       cityId,
       sellerId,
     } = req.body;
 
-    const newPublication = await Publications.create({
-      Title: name,
-      Brand: brand,
-      Price: price,
-      State: condition,
-      ID_Category: categoryId,
-      ID_SubCategory: subCategoryId,
-      DescriptionProduct: description,
-      ImageUrl: image,
-      ID_City: cityId,
-      ID_Sellers: sellerId,
-    });
+    let imageUrl = null;
+
+    // Si se envió una imagen, la subimos a Cloudinary
+    if (req.file) {
+      const result = await cloudinary.uploader.upload_stream(
+        { folder: "publications" },
+        async (error, result) => {
+          if (error) throw error;
+
+          imageUrl = result.secure_url;
+
+          const newPublication = await Publications.create({
+            Title: name,
+            Brand: brand,
+            Price: price,
+            State: condition,
+            ID_Category: categoryId,
+            ID_SubCategory: subCategoryId,
+            DescriptionProduct: description,
+            ImageUrl: imageUrl,
+            ID_City: cityId,
+            ID_Sellers: sellerId,
+          });
+
+          return res.status(201).json(newPublication);
+        }
+      );
+
+      // stream: cargamos el buffer del archivo
+      result.end(req.file.buffer);
+      return;
+    }
 
     res.status(201).json(newPublication);
   } catch (error) {

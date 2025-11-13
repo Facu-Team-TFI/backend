@@ -1,14 +1,21 @@
 import express from "express";
 import * as service from "../services/publications.services.js";
-import { getSellerByPublicationId, createPublication } from "../services/publications.services.js";
+import {
+  getSellerByPublicationId,
+  createPublication,
+} from "../services/publications.services.js";
 import models from "../models/index.js";
+import multer from "multer";
 
-const { Publications, Category, SubCategory, City, Province, Sellers, Buyers } = models;
-
+const { Publications, Category, SubCategory, City, Province, Sellers, Buyers } =
+  models;
 
 const router = express.Router();
 
-router.post('/publications', createPublication);
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+router.post("/publications", upload.single("image"), createPublication);
 
 router.get("/admin/publicaciones", async (req, res) => {
   try {
@@ -24,7 +31,9 @@ router.get("/publications/latest", async (req, res) => {
     const latestPubs = await service.getLatest(5);
     res.json(latestPubs);
   } catch (e) {
-    res.status(500).json({ message: "Error al obtener publicaciones recientes" });
+    res
+      .status(500)
+      .json({ message: "Error al obtener publicaciones recientes" });
   }
 });
 
@@ -37,40 +46,49 @@ router.get("/publications", async (req, res) => {
   }
 });
 
-router.get('/seller/:sellerId', async (req, res) => {
+router.get("/seller/:sellerId", async (req, res) => {
   try {
     const publications = await Publications.findAll({
       where: { ID_Sellers: req.params.sellerId },
       include: [
-        { model: Category, },
+        { model: Category },
         { model: SubCategory },
         {
-          model: City, as: 'City', include: [{
-            model: Province,
-            as: 'Province',
-            attributes: ['ID_Province', 'Name']
-          }]
+          model: City,
+          as: "City",
+          include: [
+            {
+              model: Province,
+              as: "Province",
+              attributes: ["ID_Province", "Name"],
+            },
+          ],
         },
-        { model: Sellers, as: 'Seller', include: [{ model: Buyers, as: 'Buyer' }] }
-      ]
+        {
+          model: Sellers,
+          as: "Seller",
+          include: [{ model: Buyers, as: "Buyer" }],
+        },
+      ],
     });
 
     res.json(publications);
   } catch (error) {
     console.error("Error al obtener publicaciones del vendedor:", error);
-    res.status(500).json({ message: 'Error del servidor' });
+    res.status(500).json({ message: "Error del servidor" });
   }
 });
 
-router.get('/publications/:id/seller', async (req, res) => {
+router.get("/publications/:id/seller", async (req, res) => {
   try {
     const id = Number(req.params.id);
 
-    if (isNaN(id)) return res.status(400).json({ message: 'ID inválido' });
+    if (isNaN(id)) return res.status(400).json({ message: "ID inválido" });
 
     const seller = await getSellerByPublicationId(id);
 
-    if (!seller) return res.status(404).json({ message: 'Vendedor no encontrado' });
+    if (!seller)
+      return res.status(404).json({ message: "Vendedor no encontrado" });
 
     res.json(seller);
   } catch (error) {
@@ -84,25 +102,25 @@ router.get("/publications/:id", async (req, res) => {
   res.json(pub);
 });
 
-
-router.put('/publications/:id', async (req, res) => {
+router.put("/publications/:id", async (req, res) => {
   const { id } = req.params;
 
   try {
     const [updated] = await Publications.update(req.body, {
-      where: { ID_Publication: id }
+      where: { ID_Publication: id },
     });
 
     if (updated === 0) {
-      return res.status(404).json({ message: 'Publicación no encontrada' });
+      return res.status(404).json({ message: "Publicación no encontrada" });
     }
 
     const updatedPost = await Publications.findByPk(id);
     res.json(updatedPost);
-
   } catch (err) {
-    console.error('Error al actualizar publicación:', err);
-    res.status(500).json({ message: 'Error al actualizar', error: err.message });
+    console.error("Error al actualizar publicación:", err);
+    res
+      .status(500)
+      .json({ message: "Error al actualizar", error: err.message });
   }
 });
 
@@ -119,14 +137,14 @@ router.delete("/publications/:id", async (req, res) => {
   }
 });
 
-
 router.delete("/admin/publicaciones/:id", async (req, res) => {
   const id = Number(req.params.id);
   if (isNaN(id)) return res.status(400).json({ message: "ID inválido" });
 
   try {
     const deleted = await service.remove(id);
-    if (!deleted) return res.status(404).json({ message: "Publicación no encontrada" });
+    if (!deleted)
+      return res.status(404).json({ message: "Publicación no encontrada" });
     res.json({ message: "Publicación eliminada correctamente" });
   } catch (error) {
     res.status(500).json({ message: "Error al eliminar publicación" });
