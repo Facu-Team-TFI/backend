@@ -1,5 +1,5 @@
 import models from "../models/index.js";
-import cloudinary from "../config/cloudinary.js";
+import { uploadBufferToCloudinary } from "../utils/cloudinaryUpload.js";
 
 const { Publications, Category, SubCategory, City, Province, Sellers, Buyers } =
   models;
@@ -82,43 +82,87 @@ export const createPublication = async (req, res) => {
 
     let imageUrl = null;
 
-    // Si se envió una imagen, la subimos a Cloudinary
     if (req.file) {
-      const result = await cloudinary.uploader.upload_stream(
-        { folder: "publications" },
-        async (error, result) => {
-          if (error) throw error;
-
-          imageUrl = result.secure_url;
-
-          const newPublication = await Publications.create({
-            Title: name,
-            Brand: brand,
-            Price: price,
-            State: condition,
-            ID_Category: categoryId,
-            ID_SubCategory: subCategoryId,
-            DescriptionProduct: description,
-            ImageUrl: imageUrl,
-            ID_City: cityId,
-            ID_Sellers: sellerId,
-          });
-
-          return res.status(201).json(newPublication);
-        }
-      );
-
-      // stream: cargamos el buffer del archivo
-      result.end(req.file.buffer);
-      return;
+      const result = await uploadBufferToCloudinary(req.file.buffer, {
+        folder: "publications",
+      });
+      imageUrl = result.secure_url;
     }
 
-    res.status(201).json(newPublication);
+    const newPublication = await Publications.create({
+      Title: name,
+      Brand: brand,
+      Price: price,
+      State: condition,
+      ID_Category: categoryId,
+      ID_SubCategory: subCategoryId,
+      DescriptionProduct: description,
+      ImageUrl: imageUrl,
+      ID_City: cityId,
+      ID_Sellers: sellerId,
+    });
+
+    return res.status(201).json(newPublication);
   } catch (error) {
     console.error("Error al crear la publicación:", error);
-    res.status(500).json({ error: "Error al crear la publicación" });
+    return res.status(500).json({ error: "Error al crear la publicación" });
   }
 };
+
+// YA NO SE USA MÁS
+// export const createPublication = async (req, res) => {
+//   try {
+//     const {
+//       name,
+//       brand,
+//       price,
+//       condition,
+//       categoryId,
+//       subCategoryId,
+//       description,
+//       cityId,
+//       sellerId,
+//     } = req.body;
+
+//     let imageUrl = null;
+
+//     // Si se envió una imagen, la subimos a Cloudinary
+//     if (req.file) {
+//       const result = await cloudinary.uploader.upload_stream(
+//         { folder: "publications" },
+//         async (error, result) => {
+//           if (error) throw error;
+
+//           imageUrl = result.secure_url;
+
+//           const newPublication = await Publications.create({
+//             Title: name,
+//             Brand: brand,
+//             Price: price,
+//             State: condition,
+//             ID_Category: categoryId,
+//             ID_SubCategory: subCategoryId,
+//             DescriptionProduct: description,
+//             ImageUrl: imageUrl,
+//             ID_City: cityId,
+//             ID_Sellers: sellerId,
+//           });
+
+//           return res.status(201).json(newPublication);
+//         }
+//       );
+
+//       // stream: cargamos el buffer del archivo
+//       result.end(req.file.buffer);
+//       return;
+//     }
+
+//     res.status(201).json(newPublication);
+//   } catch (error) {
+//     console.error("Error al crear la publicación:", error);
+//     res.status(500).json({ error: "Error al crear la publicación" });
+//   }
+// };
 
 export const update = async (id, data) => {
   const pub = await Publications.findByPk(id);

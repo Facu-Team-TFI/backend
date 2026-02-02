@@ -1,17 +1,17 @@
-import express from 'express';
-import models from '../models/index.js';
+import express from "express";
+import models from "../models/index.js";
+
+import { handlePurchaseNotifications } from "../services/notification.services.js";
 
 const router = express.Router();
 
-router.post('/api/purchase', async (req, res) => {
+router.post("/api/purchase", async (req, res) => {
   const { comprador, id, paymentType } = req.body;
 
-  if (
-    !comprador ||
-    !comprador.ID_Buyer ||
-    !id
-  ) {
-    return res.status(400).json({ message: 'Datos incompletos para crear la compra.' });
+  if (!comprador || !comprador.ID_Buyer || !id) {
+    return res
+      .status(400)
+      .json({ message: "Datos incompletos para crear la compra." });
   }
 
   try {
@@ -19,9 +19,9 @@ router.post('/api/purchase', async (req, res) => {
 
     // Crear la orden
     const newOrder = await models.Order.create({
-      State: 'En proceso',
+      State: "En proceso",
       DistributionDate: new Date(),
-      ID_Buyers: buyerId
+      ID_Buyers: buyerId,
     });
 
     await models.OrderDetail.create({
@@ -40,10 +40,18 @@ router.post('/api/purchase', async (req, res) => {
       dpto: comprador.dpto || null,
     });
 
-    res.status(201).json({ message: 'Pedido recibido con éxito', orderId: newOrder.ID_Orders });
+    // Notificar al comprador y al vendedor
+    await handlePurchaseNotifications(buyerId, id);
+
+    res
+      .status(201)
+      .json({
+        message: "Pedido recibido con éxito",
+        orderId: newOrder.ID_Orders,
+      });
   } catch (error) {
-    console.error('Error al crear la orden:', error);
-    res.status(500).json({ message: 'Error al procesar la compra' });
+    console.error("Error al crear la orden:", error);
+    res.status(500).json({ message: "Error al procesar la compra" });
   }
 });
 

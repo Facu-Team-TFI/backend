@@ -1,21 +1,18 @@
 import express from "express";
 import * as service from "../services/publications.services.js";
 import {
-  getSellerByPublicationId,
   createPublication,
+  getSellerByPublicationId,
 } from "../services/publications.services.js";
 import models from "../models/index.js";
-import multer from "multer";
+import uploadMemory from "../config/multerMemory.js";
 
 const { Publications, Category, SubCategory, City, Province, Sellers, Buyers } =
   models;
 
 const router = express.Router();
 
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
-
-router.post("/publications", upload.single("image"), createPublication);
+router.post("/publications", uploadMemory.single("image"), createPublication);
 
 router.get("/admin/publicaciones", async (req, res) => {
   try {

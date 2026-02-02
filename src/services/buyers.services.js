@@ -3,6 +3,9 @@ import models from "../models/index.js";
 import bcrypt from "bcrypt";
 import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
+import { SECRET_KEY } from "../config/jwt.js";
+import { EMAIL_PASS, EMAIL_USER, FRONTEND_URL } from "../config/env.js";
+import { uploadBufferToCloudinary } from "../utils/cloudinaryUpload.js";
 
 const { Buyers, Sellers, Publications, OrderDetail, Chats, Messages } = models;
 
@@ -17,6 +20,32 @@ export async function updateBuyer(id, data) {
   await buyer.update(data);
   return buyer;
 }
+
+export const updateBuyerWhitImage = async (req, res) => {
+  try {
+    const buyer = await Buyers.findByPk(req.params.id);
+    if (!buyer) return res.status(404).json({ error: "No encontrado" });
+
+    let avatarUrl = buyer.avatarUrl ?? null;
+
+    if (req.file) {
+      const result = await uploadBufferToCloudinary(req.file.buffer, {
+        folder: "buyer_avatars",
+      });
+      avatarUrl = result.secure_url;
+    }
+
+    await buyer.update({
+      ...req.body,
+      ...(avatarUrl ? { avatarUrl } : {}),
+    });
+
+    return res.json(buyer);
+  } catch (err) {
+    console.error("Error en updateBuyer:", err);
+    return res.status(500).json({ error: "Error al actualizar el comprador" });
+  }
+};
 
 export async function deleteBuyer(id) {
   const buyer = await Buyers.findByPk(id);
@@ -169,22 +198,21 @@ export const forgotPassword = async (req, res) => {
     const transporter = nodemailer.createTransport({
       service: "gmail", // También podés usar host, port y auth para SMTP personalizado
       auth: {
-        user: "CarpinChords@gmail.com", // email del emisor
-        pass: "kxfl elsw meat dyww", // contraseña o app password
+        user: EMAIL_USER, // email del emisor
+        pass: EMAIL_PASS, // contraseña o app password
       },
       tls: {
         rejectUnauthorized: false, // <-- Esto ignora el error de certificado
       },
     });
 
-    const secretKey = process.env.JWT_SECRET || "CarpinChords";
-    const token = jwt.sign({ id: buyer.ID_Buyers }, secretKey, {
+    const token = jwt.sign({ id: buyer.ID_Buyers }, SECRET_KEY, {
       expiresIn: "1h",
     });
 
     // Campos del mail
     const mailOptions = {
-      from: "CarpinChords@gmail.com",
+      from: EMAIL_USER,
       to: email,
       subject: "Recuperación de contraseña",
       html: `
@@ -192,7 +220,7 @@ export const forgotPassword = async (req, res) => {
     <p>Hola,</p>
     <p>Recibimos una solicitud para restablecer tu contraseña.</p>
     <p>Haz click en el siguiente enlace para crear una nueva contraseña:</p>
-    <a href="http://localhost:5173/auth/reset-password?token=${token}">
+    <a href="${FRONTEND_URL}/auth/reset-password?token=${token}">
       Restablecer contraseña
     </a>
     <p>Si no solicitaste el cambio, ignora este correo.</p>
@@ -215,7 +243,6 @@ export const verifyTokenByQuery = (req, res, next) => {
   // esta función se puede modificar para que también pueda recibir el token por header o algun otro lado
 
   const { token } = req.query;
-  const secretKey = process.env.JWT_SECRET || "CarpinChords";
 
   // Si no hay token, devuelve error 401 (no autorizado)
   if (!token) {
@@ -226,7 +253,7 @@ export const verifyTokenByQuery = (req, res, next) => {
 
   try {
     // Verifica que el token sea válido usando la clave secreta
-    const payload = jwt.verify(token, secretKey);
+    const payload = jwt.verify(token, SECRET_KEY);
     req.id = payload.id;
 
     next();

@@ -1,7 +1,9 @@
 import Notification from "../models/notification.js";
 import Chats from "../models/chats.js";
 import Buyers from "../models/buyers.js";
+import Publications from "../models/publication.js";
 import { io } from "../index.js";
+import Sellers from "../models/sellers.js";
 
 export const getAll = async (req, res) => {
   const { userId } = req.params;
@@ -57,4 +59,30 @@ export const handleMessageNotification = async (message) => {
 
   //sockets
   io.to(String(userId)).emit("server:new-notification", notification);
+};
+
+export const handlePurchaseNotifications = async (buyer_id, publication_id) => {
+  const buyer = await Buyers.findByPk(buyer_id);
+  const publication = await Publications.findByPk(publication_id);
+  const seller = await Sellers.findByPk(publication.ID_Sellers);
+
+  const buyerNotification = await Notification.create({
+    userId: buyer_id,
+    title: "Orden de compra realizada",
+    type: "compraExitosa", //Cambiar luego (con alter en la base de datos)
+    description: `Has realizado la orden de compra de ${publication.Title} con éxito.`,
+  });
+
+  const sellerNotification = await Notification.create({
+    userId: seller.ID_Buyers,
+    title: "Nueva orden de compra",
+    type: "compraExitosa", //Cambiar luego (con alter en la base de datos)
+    description: `Tienes una nueva orden de compra para ${publication.Title} de "${buyer.NickName}"`,
+  });
+
+  io.to(String(buyer_id)).emit("server:new-notification", buyerNotification);
+  io.to(String(seller.ID_Buyers)).emit(
+    "server:new-notification",
+    sellerNotification,
+  );
 };

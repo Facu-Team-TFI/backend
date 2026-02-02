@@ -2,7 +2,8 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { initAssociations } from "./Associations.js";
-import { PORT } from "./config.js";
+import { PORT } from "./config/env.js";
+// import { PORT } from "./config.js";
 import { sequelize } from "./models/index.js";
 
 import publicationRouter from "./routes/publication.routes.js";

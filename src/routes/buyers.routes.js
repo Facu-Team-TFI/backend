@@ -7,45 +7,17 @@ import {
   resetPassword,
   verifyTokenByQuery,
   forgotPassword,
+  updateBuyerWhitImage,
 } from "../services/buyers.services.js";
 import jwt from "jsonwebtoken";
-import multer from "multer";
-import path from "path";
-import fs from "fs";
+import { SECRET_KEY } from "../config/jwt.js";
 import models from "../models/index.js";
 import bcrypt from "bcrypt";
+import uploadMemory from "../config/multerMemory.js";
 
 const { Buyers, City, Province, Sellers } = models;
 
 const router = Router();
-
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     const uploadPath = "uploads/avatars";
-//     fs.mkdirSync(uploadPath, { recursive: true });
-//     cb(null, uploadPath);
-//   },
-//   filename: (req, file, cb) => {
-//     const ext = path.extname(file.originalname);
-//     const fileName = `buyer_${Date.now()}${ext}`;
-//     cb(null, fileName);
-//   },
-// });
-
-// const upload = multer({ storage });
-
-import { CloudinaryStorage } from "multer-storage-cloudinary";
-import cloudinary from "../config/cloudinary.js";
-
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: "buyer_avatars", // Carpeta en Cloudinary
-    allowed_formats: ["jpg", "jpeg", "png"],
-  },
-});
-
-const upload = multer({ storage });
 
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
@@ -122,31 +94,7 @@ router.post("/buyers", getRoleByToken, async (req, res) => {
   }
 });
 
-router.put("/buyers/:id", upload.single("avatar"), async (req, res) => {
-  try {
-    const buyer = await Buyers.findByPk(req.params.id);
-    if (!buyer) return res.status(404).json({ error: "No encontrado" });
-
-    // Parseá los campos del formulario (recordá que si usás FormData, están en req.body)
-    const data = req.body;
-
-    // Si se subió un archivo, agregalo a los datos
-    console.log(req.file);
-    if (req.file) {
-      data.avatarUrl = req.file.path; // Cloudinary genera una URL pública
-    }
-
-    // if (req.file) {
-    //   data.avatarUrl = `/uploads/avatars/${req.file.filename}`;
-    // }
-
-    await buyer.update(data);
-    res.json(buyer);
-  } catch (err) {
-    console.error(err);
-    res.status(400).json({ error: err.message });
-  }
-});
+router.put("/buyers/:id", uploadMemory.single("avatar"), updateBuyerWhitImage);
 
 router.delete("/buyers/:id", async (req, res) => {
   try {
@@ -159,8 +107,6 @@ router.delete("/buyers/:id", async (req, res) => {
     res.status(500).json({ error: "Error al eliminar comprador" });
   }
 });
-
-const SECRET_KEY = "chululu";
 
 router.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
