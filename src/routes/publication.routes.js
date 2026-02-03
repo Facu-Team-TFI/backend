@@ -3,6 +3,7 @@ import * as service from "../services/publications.services.js";
 import {
   createPublication,
   getSellerByPublicationId,
+  updatePublication,
 } from "../services/publications.services.js";
 import models from "../models/index.js";
 import uploadMemory from "../config/multerMemory.js";
@@ -99,27 +100,11 @@ router.get("/publications/:id", async (req, res) => {
   res.json(pub);
 });
 
-router.put("/publications/:id", async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const [updated] = await Publications.update(req.body, {
-      where: { ID_Publication: id },
-    });
-
-    if (updated === 0) {
-      return res.status(404).json({ message: "Publicación no encontrada" });
-    }
-
-    const updatedPost = await Publications.findByPk(id);
-    res.json(updatedPost);
-  } catch (err) {
-    console.error("Error al actualizar publicación:", err);
-    res
-      .status(500)
-      .json({ message: "Error al actualizar", error: err.message });
-  }
-});
+router.put(
+  "/publications/:id",
+  uploadMemory.single("Image"),
+  updatePublication,
+);
 
 router.delete("/publications/:id", async (req, res) => {
   try {
