@@ -34,6 +34,43 @@ export const getAll = async () => {
   });
 };
 
+export const getAllPaginated = async (page = 1, limit = 5) => {
+  const offset = (page - 1) * limit;
+
+  const result = await Publications.findAndCountAll({
+    limit: Number(limit),
+    offset,
+    include: [
+      {
+        model: Category,
+        attributes: ["ID_Category", "CategoryName"],
+      },
+      {
+        model: SubCategory,
+        attributes: ["ID_SubCategory", "NameSubCategory"],
+      },
+      {
+        model: City,
+        as: "City",
+        attributes: ["ID_City", "Name"],
+        include: {
+          model: Province,
+          as: "Province",
+          attributes: ["ID_Province", "Name"],
+        },
+      },
+    ],
+  });
+
+  return {
+    rows: result.rows,
+    totalPages: Math.ceil(result.count / limit),
+    totalItems: result.count,
+    currentPage: Number(page),
+  };
+};
+
+
 export const getSellerByPublicationId = async (publicationId) => {
   const publication = await Publications.findByPk(publicationId, {
     include: {

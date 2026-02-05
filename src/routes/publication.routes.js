@@ -15,14 +15,28 @@ const router = express.Router();
 
 router.post("/publications", uploadMemory.single("image"), createPublication);
 
-router.get("/admin/publicaciones", async (req, res) => {
+/*router.get("/admin/publicaciones", async (req, res) => {
   try {
     const pubs = await service.getAll();
     res.json(pubs);
   } catch (e) {
     res.status(500).json({ message: "Error al obtener publicaciones (admin)" });
   }
+});*/
+
+router.get("/admin/publicaciones", async (req, res) => {
+  try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 5;
+
+    const result = await service.getAllPaginated(page, limit);
+    res.json(result);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Error al obtener publicaciones (admin)" });
+  }
 });
+
 
 router.get("/publications/latest", async (req, res) => {
   try {
