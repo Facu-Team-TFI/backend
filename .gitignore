@@ -2,4 +2,3 @@ node_modules
 uploads
 src/db.js
 src/config.js
-src/.env
