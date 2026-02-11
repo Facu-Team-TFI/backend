@@ -69,14 +69,14 @@ export const handlePurchaseNotifications = async (buyer_id, publication_id) => {
   const buyerNotification = await Notification.create({
     userId: buyer_id,
     title: "Orden de compra realizada",
-    type: "compraExitosa", //Cambiar luego (con alter en la base de datos)
+    type: "compraExitosa",
     description: `Has realizado la orden de compra de ${publication.Title} con éxito.`,
   });
 
   const sellerNotification = await Notification.create({
     userId: seller.ID_Buyers,
     title: "Nueva orden de compra",
-    type: "compraExitosa", //Cambiar luego (con alter en la base de datos)
+    type: "ventaExitosa",
     description: `Tienes una nueva orden de compra para ${publication.Title} de "${buyer.NickName}"`,
   });
 

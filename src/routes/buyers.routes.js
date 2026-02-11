@@ -8,6 +8,7 @@ import {
   verifyTokenByQuery,
   forgotPassword,
   updateBuyerWhitImage,
+  getAllSailsBySellerId,
 } from "../services/buyers.services.js";
 import jwt from "jsonwebtoken";
 import { SECRET_KEY } from "../config/jwt.js";
@@ -146,7 +147,7 @@ router.post("/api/login", async (req, res) => {
     const token = jwt.sign(
       { id: buyer.ID_Buyers, role: "buyer", isAdmin: buyer.IsAdmin },
       SECRET_KEY,
-      { expiresIn: "1h" }
+      { expiresIn: "1h" },
     );
 
     return res.json({
@@ -251,5 +252,7 @@ router.post("/register-seller", createSeller);
 router.post("/auth/forgot-password", forgotPassword);
 
 router.put("/auth/reset-password", verifyTokenByQuery, resetPassword);
+
+router.get("/sellers/:id/sails", getAllSailsBySellerId);
 
 export default router;

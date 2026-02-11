@@ -7,7 +7,8 @@ import { SECRET_KEY } from "../config/jwt.js";
 import { EMAIL_PASS, EMAIL_USER, FRONTEND_URL } from "../config/env.js";
 import { uploadBufferToCloudinary } from "../utils/cloudinaryUpload.js";
 
-const { Buyers, Sellers, Publications, OrderDetail, Chats, Messages } = models;
+const { Buyers, Sellers, Publications, OrderDetail, Chats, Messages, Order } =
+  models;
 
 export async function findBuyerById(id) {
   return await Buyers.findByPk(id);
@@ -296,4 +297,54 @@ export const resetPassword = async (req, res) => {
       message: "No se ha podido cambiar la contraseña",
     });
   }
+};
+
+export const getAllSailsBySellerId = async (req, res) => {
+  const { id: sellerId } = req.params;
+
+  const sails = await Order.findAll({
+    attributes: ["ID_Orders", "State", "DistributionDate"],
+    include: [
+      {
+        model: OrderDetail,
+        as: "OrderDetails",
+        required: true,
+        attributes: [
+          "ID_OrderDetails",
+          "ID_Publications",
+          "ID_Orders",
+          "PaymentType",
+          "nombre",
+          "email",
+          "telefono",
+          "pais",
+          "provincia",
+          "ciudad",
+          "cp",
+          "calle",
+          "dpto",
+        ],
+        include: [
+          {
+            model: Publications,
+            as: "Publication",
+            attributes: ["ID_Publication", "Title", "Price"],
+            where: { ID_Sellers: sellerId },
+            required: true, // INNER JOIN para asegurar que la publicación es de ese seller
+          },
+        ],
+      },
+    ],
+    order: [
+      ["ID_Orders", "DESC"],
+      [{ model: OrderDetail, as: "OrderDetails" }, "ID_OrderDetails", "DESC"],
+    ],
+    // sin paginación
+  });
+
+  return res.json({
+    success: true,
+    message: "Ventas obtenidas correctamente",
+    sails,
+  });
 };
