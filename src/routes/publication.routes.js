@@ -7,6 +7,7 @@ import {
 } from "../services/publications.services.js";
 import models from "../models/index.js";
 import uploadMemory from "../config/multerMemory.js";
+import { getDashboardData } from "../services/publications.services.js";
 
 const { Publications, Category, SubCategory, City, Province, Sellers, Buyers } =
   models;
@@ -146,5 +147,9 @@ router.delete("/admin/publicaciones/:id", async (req, res) => {
     res.status(500).json({ message: "Error al eliminar publicación" });
   }
 });
+
+router.get("/seller/dashboard/:id", getDashboardData);
+
+
 
 export default router;

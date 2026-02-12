@@ -1,10 +1,11 @@
-import models from "../models/index.js";
+import models, { Order, OrderDetail, } from "../models/index.js";
 import { uploadBufferToCloudinary } from "../utils/cloudinaryUpload.js";
 import {
   getPublicIdFromCloudinaryUrl,
   isCloudinaryUrl,
 } from "../utils/cloudinaryPublicId.js";
 import cloudinary from "../config/cloudinary.js";
+import { json } from "sequelize";
 
 const { Publications, Category, SubCategory, City, Province, Sellers, Buyers } =
   models;
@@ -156,6 +157,7 @@ export const update = async (id, data) => {
   if (!pub) return null;
   return await pub.update(data);
 };
+
 
 export const remove = async (id) => {
   const pub = await Publications.findByPk(id);
@@ -317,5 +319,66 @@ export const updatePublication = async (req, res) => {
     return res
       .status(500)
       .json({ message: "Error al actualizar", error: err.message });
+  }
+};
+
+export const getDashboardData = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const activePostsPerSeller = await Publications.count({
+      where: { ID_Sellers: userId }})
+
+    const pendingOrdersPerSeller = await Order.count({
+      where: { State: "En proceso" },
+      include: [
+        {
+          model: OrderDetail,
+          as: "OrderDetails",
+          required: true,
+          include: [
+            {
+              model: Publications,
+              as: "Publication",
+              where: { ID_Sellers: userId }
+            }
+          ]
+        }
+      ],
+      distinct: true
+    });
+
+    const totalSalesPerSeller = await Order.count({
+      where: { State: "Entregada" },
+      include: [
+        {
+          model: OrderDetail,
+          as: "OrderDetails",
+          required: true,
+          include: [
+            {
+              model: Publications,
+              as: "Publication",
+              where: { ID_Sellers: userId }
+            }
+          ]
+        }
+      ],
+      distinct: true
+    });
+
+      return res.json({
+        totalSales: totalSalesPerSeller,
+        pendingOrders: pendingOrdersPerSeller,
+        newMessages: 5,
+        activePosts: activePostsPerSeller,
+      })
+
+  } catch (error) {
+    console.error("ERROR REAL:", error);
+    res.status(500).json({ 
+      message: "Error al obtener dashboard data",
+      error: error.message
+    });
   }
 };
