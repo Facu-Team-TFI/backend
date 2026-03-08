@@ -1,6 +1,5 @@
 import dotenv from "dotenv";
-
-dotenv.config({ path: "src/.env" }); //ruta absoluta de .env
+dotenv.config(); // busca .env en la raíz del proyecto
 
 export const {
   PORT,

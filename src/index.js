@@ -3,7 +3,6 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { initAssociations } from "./Associations.js";
 import { PORT } from "./config/env.js";
-// import { PORT } from "./config.js";
 import { sequelize } from "./models/index.js";
 
 import publicationRouter from "./routes/publication.routes.js";
@@ -79,8 +78,8 @@ async function main() {
     await sequelize.sync({ alter: false });
     console.log("Base de datos sincronizada");
 
-    server.listen(PORT, () => {
-      console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    server.listen(PORT || 3000, () => {
+      console.log(`Servidor corriendo en http://localhost:${PORT || 3000}`);
     });
   } catch (err) {
     console.error("Error al conectar con la base de datos:", err);
