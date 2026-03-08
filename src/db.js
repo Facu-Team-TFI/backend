@@ -1,59 +1,40 @@
-// import { Sequelize } from "sequelize";
-// import {
-//   DB_HOST,
-//   DB_USER,
-//   DB_PASSWORD,
-//   DB_NAME,
-//   DB_PORT,
-// } from "./config/env.js";
-
-// const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
-//   host: DB_HOST,
-//   dialect: "mysql",
-// });
-
-// export default sequelize;
-
 import { Sequelize } from "sequelize";
-import fs from "fs";
-import path from "path";
 import {
   DB_HOST,
   DB_USER,
   DB_PASSWORD,
   DB_NAME,
   DB_PORT,
+  MYSQL_SSL,
+  AIVEN_CA_PEM_B64,
 } from "./config/env.js";
 
-// Ruta robusta al CA de Aiven (ubicado en backend/certs/ca.pem)
-const caPath = path.join(process.cwd(), "certs", "ca.pem");
+// ¿Forzamos SSL?
+const useSsl = String(MYSQL_SSL || "").toLowerCase() === "true";
 
-// Carga el CA una sola vez
-const sslCa = fs.readFileSync(caPath);
+// Si subiste el CA en base64, lo decodificamos a texto PEM (contenido del cert)
+const caPem = AIVEN_CA_PEM_B64
+  ? Buffer.from(AIVEN_CA_PEM_B64, "base64").toString("utf8")
+  : undefined;
+
+// `mysql2` permite pasar el CONTENIDO del certificado en ssl.ca (string)
+const dialectOptions = useSsl
+  ? {
+      ssl: {
+        rejectUnauthorized: true, // validación estricta del servidor
+        ...(caPem ? { ca: caPem } : {}),
+      },
+    }
+  : {};
 
 const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
   host: DB_HOST,
-  port: Number(DB_PORT),
+  port: Number(DB_PORT || 3306),
   dialect: "mysql",
-  // Opciones SSL requeridas por Aiven
-  dialectOptions: {
-    ssl: {
-      ca: sslCa,
-      // Aiven requiere SSL; con 'ca' alcanza. Si en algún entorno
-      // hay problemas de validación local, podés agregar:
-      // rejectUnauthorized: true, // (por defecto true)
-    },
-  },
-  // Pool saludable para serverless o prod
-  pool: {
-    max: 5,
-    min: 0,
-    idle: 10000,
-    acquire: 30000,
-  },
-  // Ajustá según tu preferencia
-  logging: false, // poné true si querés ver las queries
-  timezone: "+00:00", // guarda en UTC (recomendado)
+  dialectOptions,
+  pool: { max: 5, min: 0, idle: 10000, acquire: 30000 },
+  logging: false,
+  timezone: "+00:00",
 });
 
 export default sequelize;

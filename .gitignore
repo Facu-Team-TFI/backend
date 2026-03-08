@@ -4,3 +4,4 @@ src/db.js
 src/config.js
 .env
 certs/ca.pem
+certs/ca.pem.b64

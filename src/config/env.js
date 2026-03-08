@@ -15,4 +15,6 @@ export const {
   EMAIL_USER,
   EMAIL_PASS,
   FRONTEND_URL,
+  MYSQL_SSL,
+  AIVEN_CA_PEM_B64,
 } = process.env;
