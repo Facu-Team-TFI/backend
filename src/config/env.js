@@ -17,4 +17,7 @@ export const {
   FRONTEND_URL,
   MYSQL_SSL,
   AIVEN_CA_PEM_B64,
+  PAGES_PROJECT,
+  ALLOWED_ORIGINS,
+  NODE_ENV,
 } = process.env;
