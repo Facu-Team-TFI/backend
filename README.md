@@ -3,8 +3,11 @@
 Este repositorio contiene el desarrollo del lado del servidor para **CarpinChords**, un marketplace integral de instrumentos y accesorios musicales. El proyecto fue presentado y aprobado como el **Trabajo Final Integrador (TFI)** de la Tecnicatura Universitaria en Programación de la **UTN FRRo**.
 
 ## 🚀 Despliegue y Enlaces
+> **Nota:** En caso de alertas preventivas en el dominio principal por parte del navegador, utilizar el enlace de acceso directo.
+
 - **API URL (Railway):** [https://carpinchords-backend.up.railway.app](https://carpinchords-backend.up.railway.app)
-- **Frontend URL (Cloudflare Pages):** [https://carpinchords.pages.dev](https://carpinchords.pages.dev)
+- **Frontend URL:** [https://carpinchords.pages.dev](https://carpinchords.pages.dev)
+- **Acceso directo Frontend:** [https://carpinchords.pages.dev/home](https://carpinchords.pages.dev/home)
 - **Repositorio Backend:** [https://github.com/Facu-Team-TFI/backend](https://github.com/Facu-Team-TFI/backend)
 - **Repositorio Frontend:** [https://github.com/Facu-Team-TFI/frontend](https://github.com/Facu-Team-TFI/frontend)
 
